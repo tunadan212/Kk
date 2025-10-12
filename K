@@ -1,0 +1,185 @@
+local Players=game:GetService("Players")
+local CoreGui=game:GetService("CoreGui")
+local UIS=game:GetService("UserInputService")
+local VIM=game:GetService("VirtualInputManager")
+
+if _G.__KHNGSCRIPT_HUB then _G.__KHNGSCRIPT_HUB:Destroy() end
+
+local function toast(parent,title,msg,dur)
+    dur=dur or 3
+    local t=Instance.new("TextLabel")
+    t.BackgroundColor3=Color3.fromRGB(35,160,95)
+    t.TextColor3=Color3.fromRGB(255,255,255)
+    t.Font=Enum.Font.Gotham
+    t.TextSize=16
+    t.Text=title.." - "..msg
+    t.AutomaticSize=Enum.AutomaticSize.XY
+    t.ZIndex=9999
+    t.AnchorPoint=Vector2.new(0.5,1)
+    t.Position=UDim2.new(0.5,0,0,-10)
+    t.Parent=parent
+    local pad=Instance.new("UIPadding",t)
+    pad.PaddingTop=UDim.new(0,8);pad.PaddingBottom=UDim.new(0,8)
+    pad.PaddingLeft=UDim.new(0,12);pad.PaddingRight=UDim.new(0,12)
+    Instance.new("UICorner",t).CornerRadius=UDim.new(0,8)
+    task.delay(dur,function()if t and t.Parent then t:Destroy()end end)
+end
+
+local function pill(parent,text)
+    local b=Instance.new("TextButton")
+    b.Size=UDim2.new(0.48,0,0,46)
+    b.BackgroundColor3=Color3.fromRGB(114,106,240)
+    b.Text=text
+    b.TextColor3=Color3.fromRGB(255,255,255)
+    b.Font=Enum.Font.GothamSemibold
+    b.TextSize=18
+    b.AutoButtonColor=true
+    b.Active=true;b.Selectable=true
+    b.Parent=parent
+    Instance.new("UICorner",b).CornerRadius=UDim.new(0,12)
+    local s=Instance.new("UIStroke",b)
+    s.Thickness=1.2
+    s.Color=Color3.fromRGB(255,255,255)
+    s.Transparency=0.75
+    return b
+end
+
+local function pillColor(btn,r,g,b) btn.BackgroundColor3=Color3.fromRGB(r,g,b) end
+
+local function dragify(handle,target)
+    local dragging=false; local dragInput; local startPos; local startInputPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            dragging=true; startPos=target.Position; startInputPos=input.Position
+            input.Changed:Connect(function() if input.UserInputState==Enum.UserInputState.End then dragging=false end end)
+        end
+    end)
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+            dragInput=input
+        end
+    end)
+    UIS.InputChanged:Connect(function(input)
+        if input==dragInput and dragging then
+            local delta=input.Position-startInputPos
+            target.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y)
+        end
+    end)
+end
+
+local gui=Instance.new("ScreenGui")
+gui.Name="KhngscriptHub"
+gui.ResetOnSpawn=false
+gui.ZIndexBehavior=Enum.ZIndexBehavior.Global
+gui.Parent=CoreGui
+_G.__KHNGSCRIPT_HUB=gui
+
+local frame=Instance.new("Frame",gui)
+frame.Size=UDim2.new(0,440,0,240)
+frame.Position=UDim2.new(0.5,-220,0.5,-120)
+frame.BackgroundColor3=Color3.fromRGB(20,22,26)
+frame.BorderSizePixel=0
+Instance.new("UICorner",frame).CornerRadius=UDim.new(0,16)
+local fs=Instance.new("UIStroke",frame)
+fs.Color=Color3.fromRGB(85,85,95)
+fs.Thickness=1
+
+local titleBar=Instance.new("Frame",frame)
+titleBar.Size=UDim2.new(1,0,0,48)
+titleBar.BackgroundColor3=Color3.fromRGB(28,30,36)
+titleBar.BorderSizePixel=0
+Instance.new("UICorner",titleBar).CornerRadius=UDim.new(0,16)
+local title=Instance.new("TextLabel",titleBar)
+title.BackgroundTransparency=1
+title.Size=UDim2.new(1,-120,1,0)
+title.Position=UDim2.new(0,16,0,0)
+title.Font=Enum.Font.GothamBlack
+title.TextSize=20
+title.TextXAlignment=Enum.TextXAlignment.Left
+title.TextColor3=Color3.fromRGB(235,235,245)
+title.Text="Khngscript Hub"
+dragify(titleBar,frame)
+
+local grid=Instance.new("Frame",frame)
+grid.BackgroundTransparency=1
+grid.Size=UDim2.new(1,-24,1,-64)
+grid.Position=UDim2.new(0,12,0,56)
+local layout=Instance.new("UIGridLayout",grid)
+layout.CellPadding=UDim2.new(0,12,0,12)
+layout.CellSize=UDim2.new(0.5,-6,0,46)
+layout.FillDirectionMaxCells=2
+layout.HorizontalAlignment=Enum.HorizontalAlignment.Center
+layout.VerticalAlignment=Enum.VerticalAlignment.Top
+
+-- 🧠 Nhân bản (P)
+local btnClone=pill(grid,"🧠 Nhân bản")
+pillColor(btnClone,114,106,240)
+btnClone.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.P,false,game)
+    VIM:SendKeyEvent(false,Enum.KeyCode.P,false,game)
+    toast(frame,"Nhân bản","Đã gửi phím P",2)
+end)
+
+-- 🧠 Nhân bản v2 (loadstring)
+local btnClone2=pill(grid,"🧠 Nhân bản v2")
+pillColor(btnClone2,114,106,240)
+btnClone2.MouseButton1Click:Connect(function()
+    btnClone2.Text="Đang nhân bản..."
+    pillColor(btnClone2,70,200,90)
+    toast(frame,"Nhân bản v2","Đang nhân bản...",2)
+    task.defer(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tunadan212/Kkkk/refs/heads/main/K"))()
+    end)
+end)
+
+-- 🎉 Execute Event (Q)
+local btnExec=pill(grid,"🎉 Execute Event")
+pillColor(btnExec,114,106,240)
+btnExec.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.Q,false,game)
+    VIM:SendKeyEvent(false,Enum.KeyCode.Q,false,game)
+    toast(frame,"Execute Event","Đã gửi phím Q",2)
+end)
+
+-- 🤤 Spawn Brainrot (R)
+local btnSpawn=pill(grid,"🤤 Spawn Brainrot")
+pillColor(btnSpawn,70,180,110)
+local tb=Instance.new("TextBox",grid)
+tb.Size=UDim2.new(0.5,-6,0,46)
+tb.BackgroundColor3=Color3.fromRGB(35,36,40)
+tb.Text="nhập tên brainrot"
+tb.TextColor3=Color3.fromRGB(220,220,230)
+tb.Font=Enum.Font.Gotham
+tb.TextSize=16
+tb.ClearTextOnFocus=false
+Instance.new("UICorner",tb).CornerRadius=UDim.new(0,12)
+local tbs=Instance.new("UIStroke",tb)
+tbs.Color=Color3.fromRGB(84,130,255)
+tbs.Thickness=1
+
+btnSpawn.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.R,false,game)
+    VIM:SendKeyEvent(false,Enum.KeyCode.R,false,game)
+    toast(frame,"Spawn Brainrot","Đã gửi phím R ("..(tb.Text or "")..")",2)
+end)
+
+-- Nút Panel
+local toggle=Instance.new("ImageButton",gui)
+toggle.Size=UDim2.new(0,64,0,64)
+toggle.AnchorPoint=Vector2.new(1,1)
+toggle.Position=UDim2.new(1,-16,1,-16)
+toggle.BackgroundColor3=Color3.fromRGB(28,30,36)
+toggle.Image="rbxassetid://115555110268657"
+Instance.new("UICorner",toggle).CornerRadius=UDim.new(1,0)
+local ts=Instance.new("UIStroke",toggle)
+ts.Color=Color3.fromRGB(84,130,255)
+ts.Thickness=1.2
+
+dragify(toggle,toggle)
+local visible=true
+toggle.MouseButton1Click:Connect(function()
+    visible=not visible
+    frame.Visible=visible
+end)
+
+toast(frame,"Khngscript Hub","UI đã tải!",2)
