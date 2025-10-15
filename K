@@ -1,4 +1,4 @@
-
+-- Khngscript: Loading 5s -> Hub (single instance)
 local CoreGui=game:GetService("CoreGui")
 local UIS=game:GetService("UserInputService")
 local VIM=game:GetService("VirtualInputManager")
@@ -7,6 +7,7 @@ local TweenService=game:GetService("TweenService")
 local GUI_NAME="Khngscript_AllInOne"
 local old=CoreGui:FindFirstChild(GUI_NAME); if old then old:Destroy() end
 
+-- ==== helpers ====
 local function toast(parent,title,msg,dur)
     dur=dur or 3
     local t=Instance.new("TextLabel")
@@ -58,12 +59,14 @@ local function dragify(handle,target)
     end)
 end
 
+-- ==== root gui ====
 local gui=Instance.new("ScreenGui")
 gui.Name=GUI_NAME
 gui.IgnoreGuiInset=true
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Global
 gui.Parent=CoreGui
 
+-- ==== loading box nhỏ + nền mờ 5s ====
 local bg=Instance.new("Frame",gui)
 bg.Size=UDim2.new(1,0,1,0)
 bg.BackgroundColor3=Color3.fromRGB(0,0,0)
@@ -159,21 +162,22 @@ layout.FillDirectionMaxCells=2
 layout.HorizontalAlignment=Enum.HorizontalAlignment.Center
 layout.VerticalAlignment=Enum.VerticalAlignment.Top
 
-local btnClone=pill(body,"🧠 Nhân bản"); pillColor(btnClone,114,106,240)
+local btnClone=pill(body,
+"🧠 Duplicate"); pillColor(btnClone,114,106,240)
 btnClone.MouseButton1Click:Connect(function()
     VIM:SendKeyEvent(true,Enum.KeyCode.P,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.P,false,game)
-    toast(frame,"Nhân bản","Đã gửi phím P",2)
+    toast(frame,"Duplicate","Đã gửi phím P",2)
 end)
 
-local btnClone2=pill(body,"🧠 Nhân bản v2"); pillColor(btnClone2,114,106,240)
+local btnClone2=pill(body,"🧠 Duplicate v2"); pillColor(btnClone2,114,106,240)
 btnClone2.MouseButton1Click:Connect(function()
-    btnClone2.Text="Đang nhân bản..."; pillColor(btnClone2,70,200,90)
+    btnClone2.Text="..."; pillColor(btnClone2,70,200,90)
     task.defer(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/tunadan212/Kkkk/refs/heads/main/K"))()
     end)
 end)
 
-local btnExec=pill(body,"🎉 Execute Event"); pillColor(btnExec,114,106,240)
+local btnExec=pill(body,"🎉 Event"); pillColor(btnExec,114,106,240)
 btnExec.MouseButton1Click:Connect(function()
     VIM:SendKeyEvent(true,Enum.KeyCode.Q,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.Q,false,game)
     toast(frame,"Execute Event","Đã gửi phím Q",2)
@@ -183,7 +187,7 @@ local btnSpawn=pill(body,"🤤 Spawn Brainrot"); pillColor(btnSpawn,70,180,110)
 local tb=Instance.new("TextBox",body)
 tb.Size=UDim2.new(0.5,-6,0,46)
 tb.BackgroundColor3=Color3.fromRGB(35,36,40)
-tb.Text="nhập tên brainrot"
+tb.Text="Enter Brainrot"
 tb.TextColor3=Color3.fromRGB(220,220,230)
 tb.Font=Enum.Font.Gotham
 tb.TextSize=16
