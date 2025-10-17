@@ -1,13 +1,14 @@
--- Khngscript: Loading 5s -> Hub (single instance)
-local CoreGui=game:GetService("CoreGui")
+-- Khngscript: Loading 5s -> Hub (PlayerGui)
+local Players=game:GetService("Players")
 local UIS=game:GetService("UserInputService")
 local VIM=game:GetService("VirtualInputManager")
 local TweenService=game:GetService("TweenService")
+local LP=Players.LocalPlayer
+local PG=LP:WaitForChild("PlayerGui")
 
-local GUI_NAME="Khngscript_AllInOne"
-local old=CoreGui:FindFirstChild(GUI_NAME); if old then old:Destroy() end
+local GUI_NAME="Khngscript_AllInOne_PG"
+local old=PG:FindFirstChild(GUI_NAME); if old then old:Destroy() end
 
--- ==== helpers ====
 local function toast(parent,title,msg,dur)
     dur=dur or 3
     local t=Instance.new("TextLabel")
@@ -59,14 +60,13 @@ local function dragify(handle,target)
     end)
 end
 
--- ==== root gui ====
 local gui=Instance.new("ScreenGui")
 gui.Name=GUI_NAME
 gui.IgnoreGuiInset=true
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Global
-gui.Parent=CoreGui
+gui.Parent=PG
 
--- ==== loading box nhỏ + nền mờ 5s ====
+-- Loading box nhỏ + nền mờ 5s
 local bg=Instance.new("Frame",gui)
 bg.Size=UDim2.new(1,0,1,0)
 bg.BackgroundColor3=Color3.fromRGB(0,0,0)
@@ -121,9 +121,9 @@ sub.TextSize=18
 sub.TextColor3=Color3.fromRGB(255,255,255)
 sub.Text="Subscribe to Khngscript"
 
-TweenService:Create(fill,TweenInfo.new(5,Enum.EasingStyle.Linear),{Size=UDim2.new(1,0,1,0)}):Play()
+TweenService:Create(fill,TweenInfo.new(8,Enum.EasingStyle.Linear),{Size=UDim2.new(1,0,1,0)}):Play()
 
--- ==== main hub (ẩn cho tới khi xong loading) ====
+-- Main hub (ẩn cho tới khi xong loading)
 local frame=Instance.new("Frame",gui)
 frame.Visible=false
 frame.Size=UDim2.new(0,440,0,240)
@@ -152,6 +152,71 @@ t.Text="Khngscript Hub"
 dragify(titleBar,frame)
 
 local body=Instance.new("Frame",frame)
+body.BackgroundTransparency=1
+body.Size=UDim2.new(1,-24,1,-64)
+body.Position=UDim2.new(0,12,0,56)
+local layout=Instance.new("UIGridLayout",body)
+layout.CellPadding=UDim2.new(0,12,0,12)
+layout.CellSize=UDim2.new(0.5,-6,0,46)
+layout.FillDirectionMaxCells=2
+layout.HorizontalAlignment=Enum.HorizontalAlignment.Center
+layout.VerticalAlignment=Enum.VerticalAlignment.Top
+
+local btnClone=pill(body,"🧠 Nhân bản"); pillColor(btnClone,114,106,240)
+btnClone.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.P,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.P,false,game)
+    toast(frame,"Nhân bản","Đã gửi phím P",2)
+end)
+
+local btnClone2=pill(body,"🧠 Nhân bản v2"); pillColor(btnClone2,114,106,240)
+btnClone2.MouseButton1Click:Connect(function()
+    btnClone2.Text="Đang nhân bản..."; pillColor(btnClone2,70,200,90)
+    task.defer(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tunadan212/Kkkk/refs/heads/main/K"))()
+    end)
+end)
+
+local btnExec=pill(body,"🎉 Execute Event"); pillColor(btnExec,114,106,240)
+btnExec.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.Q,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.Q,false,game)
+    toast(frame,"Execute Event","Đã gửi phím Q",2)
+end)
+
+local btnSpawn=pill(body,"🤤 Spawn Brainrot"); pillColor(btnSpawn,70,180,110)
+local tb=Instance.new("TextBox",body)
+tb.Size=UDim2.new(0.5,-6,0,46)
+tb.BackgroundColor3=Color3.fromRGB(35,36,40)
+tb.Text="nhập tên brainrot"
+tb.TextColor3=Color3.fromRGB(220,220,230)
+tb.Font=Enum.Font.Gotham
+tb.TextSize=16
+tb.ClearTextOnFocus=false
+Instance.new("UICorner",tb).CornerRadius=UDim.new(0,12)
+local tbs=Instance.new("UIStroke",tb) tbs.Color=Color3.fromRGB(84,130,255) tbs.Thickness=1
+btnSpawn.MouseButton1Click:Connect(function()
+    VIM:SendKeyEvent(true,Enum.KeyCode.R,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.R,false,game)
+    toast(frame,"Spawn Brainrot","Đã gửi phím R ("..(tb.Text or "")..")",2)
+end)
+
+local panel=Instance.new("ImageButton",gui)
+panel.Visible=false
+panel.Size=UDim2.new(0,64,0,64)
+panel.AnchorPoint=Vector2.new(1,1)
+panel.Position=UDim2.new(1,-16,1,-16)
+panel.BackgroundColor3=Color3.fromRGB(28,30,36)
+panel.Image="rbxassetid://115555110268657"
+Instance.new("UICorner",panel).CornerRadius=UDim.new(1,0)
+local ps=Instance.new("UIStroke",panel) ps.Color=Color3.fromRGB(84,130,255) ps.Thickness=1.2
+dragify(panel,panel)
+local visible=true
+panel.MouseButton1Click:Connect(function() visible=not visible; frame.Visible=visible end)
+
+task.delay(5,function()
+    if bg then bg:Destroy() end
+    if box then box:Destroy() end
+    frame.Visible=true
+    panel.Visible=true
+end)local body=Instance.new("Frame",frame)
 body.BackgroundTransparency=1
 body.Size=UDim2.new(1,-24,1,-64)
 body.Position=UDim2.new(0,12,0,56)
