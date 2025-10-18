@@ -1,4 +1,4 @@
--- Khngscript: Loading 5s -> Hub (PlayerGui)
+-- Khngscript: Loading 8s -> Hub (PlayerGui) + Duplicate v2 có tiến độ 1%-100% trong 10s
 local Players=game:GetService("Players")
 local UIS=game:GetService("UserInputService")
 local VIM=game:GetService("VirtualInputManager")
@@ -9,22 +9,6 @@ local PG=LP:WaitForChild("PlayerGui")
 local GUI_NAME="Khngscript_AllInOne_PG"
 local old=PG:FindFirstChild(GUI_NAME); if old then old:Destroy() end
 
-local function toast(parent,title,msg,dur)
-    dur=dur or 3
-    local t=Instance.new("TextLabel")
-    t.BackgroundColor3=Color3.fromRGB(35,160,95)
-    t.TextColor3=Color3.fromRGB(255,255,255)
-    t.Font=Enum.Font.Gotham
-    t.TextSize=16
-    t.Text=title.." - "..msg
-    t.AutomaticSize=Enum.AutomaticSize.XY
-    t.ZIndex=9999
-    t.AnchorPoint=Vector2.new(0.5,1)
-    t.Position=UDim2.new(0.5,0,0,-10)
-    t.Parent=parent
-    Instance.new("UICorner",t).CornerRadius=UDim.new(0,8)
-    task.delay(dur,function() if t and t.Parent then t:Destroy() end end)
-end
 local function pill(parent,text)
     local b=Instance.new("TextButton")
     b.Size=UDim2.new(0.48,0,0,46)
@@ -34,7 +18,7 @@ local function pill(parent,text)
     b.Font=Enum.Font.GothamSemibold
     b.TextSize=18
     b.AutoButtonColor=true
-    b.Active=true; b.Selectable=true
+    b.Active=true;b.Selectable=true
     b.Parent=parent
     Instance.new("UICorner",b).CornerRadius=UDim.new(0,12)
     local s=Instance.new("UIStroke",b) s.Thickness=1.2 s.Color=Color3.fromRGB(255,255,255) s.Transparency=0.75
@@ -60,13 +44,14 @@ local function dragify(handle,target)
     end)
 end
 
+-- GUI root
 local gui=Instance.new("ScreenGui")
 gui.Name=GUI_NAME
 gui.IgnoreGuiInset=true
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Global
 gui.Parent=PG
 
--- Loading box nhỏ + nền mờ 5s
+-- Loading box nhỏ + nền mờ 8s
 local bg=Instance.new("Frame",gui)
 bg.Size=UDim2.new(1,0,1,0)
 bg.BackgroundColor3=Color3.fromRGB(0,0,0)
@@ -123,7 +108,7 @@ sub.Text="Subscribe to Khngscript"
 
 TweenService:Create(fill,TweenInfo.new(8,Enum.EasingStyle.Linear),{Size=UDim2.new(1,0,1,0)}):Play()
 
--- Main hub (ẩn cho tới khi xong loading)
+-- Main Hub (ẩn tới khi xong loading)
 local frame=Instance.new("Frame",gui)
 frame.Visible=false
 frame.Size=UDim2.new(0,440,0,240)
@@ -162,26 +147,91 @@ layout.FillDirectionMaxCells=2
 layout.HorizontalAlignment=Enum.HorizontalAlignment.Center
 layout.VerticalAlignment=Enum.VerticalAlignment.Top
 
-local btnClone=pill(body,"🧠 Nhân bản"); pillColor(btnClone,114,106,240)
+-- === Hộp tiến độ 10s cho Duplicate v2 ===
+local function ShowProgress10s()
+    if gui:FindFirstChild("KS_ProgressModal") then gui.KS_ProgressModal:Destroy() end
+    local modal=Instance.new("Frame",gui)
+    modal.Name="KS_ProgressModal"
+    modal.Size=UDim2.new(0,420,0,140)
+    modal.AnchorPoint=Vector2.new(0.5,0.5)
+    modal.Position=UDim2.new(0.5,0,0.5,0)
+    modal.BackgroundColor3=Color3.fromRGB(15,15,15)
+    modal.BorderSizePixel=0
+    Instance.new("UICorner",modal).CornerRadius=UDim.new(0,16)
+
+    local title=Instance.new("TextLabel",modal)
+    title.BackgroundTransparency=1
+    title.Position=UDim2.new(0,16,0,12)
+    title.Size=UDim2.new(1,-32,0,26)
+    title.Font=Enum.Font.GothamBold
+    title.TextSize=20
+    title.TextColor3=Color3.fromRGB(255,255,255)
+    title.TextXAlignment=Enum.TextXAlignment.Left
+    title.Text="Duplicate v2"
+
+    local percentLabel=Instance.new("TextLabel",modal)
+    percentLabel.BackgroundTransparency=1
+    percentLabel.Position=UDim2.new(0,16,0,44)
+    percentLabel.Size=UDim2.new(1,-32,0,22)
+    percentLabel.Font=Enum.Font.Gotham
+    percentLabel.TextSize=18
+    percentLabel.TextColor3=Color3.fromRGB(210,210,215)
+    percentLabel.TextXAlignment=Enum.TextXAlignment.Left
+    percentLabel.Text="1%"
+
+    local barBg=Instance.new("Frame",modal)
+    barBg.AnchorPoint=Vector2.new(0.5,0)
+    barBg.Position=UDim2.new(0.5,0,0,76)
+    barBg.Size=UDim2.new(0.9,0,0,24)
+    barBg.BackgroundColor3=Color3.fromRGB(45,45,45)
+    barBg.BorderSizePixel=0
+    Instance.new("UICorner",barBg).CornerRadius=UDim.new(0,12)
+
+    local fill=Instance.new("Frame",barBg)
+    fill.Size=UDim2.new(0,0,1,0)
+    fill.BackgroundColor3=Color3.fromRGB(70,200,90)
+    fill.BorderSizePixel=0
+    Instance.new("UICorner",fill).CornerRadius=UDim.new(0,12)
+
+    -- chạy từ 1 -> 100% trong 10 giây (0.1s mỗi %)
+    task.spawn(function()
+        local steps=100
+        local stepTime=10/steps
+        for i=1,steps do
+            percentLabel.Text = tostring(i).."%"
+            fill.Size = UDim2.new(i/100,0,1,0)
+            task.wait(stepTime)
+        end
+        title.Text="Success"
+        percentLabel.Text="100%"
+        task.wait(0.6)
+        modal:Destroy()
+    end)
+end
+
+-- 🧠 Duplicate (P) — KHÔNG hiện toast
+local btnClone=pill(body,"🧠 Duplicate"); pillColor(btnClone,114,106,240)
 btnClone.MouseButton1Click:Connect(function()
     VIM:SendKeyEvent(true,Enum.KeyCode.P,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.P,false,game)
-    toast(frame,"Nhân bản","Đã gửi phím P",2)
 end)
 
-local btnClone2=pill(body,"🧠 Nhân bản v2"); pillColor(btnClone2,114,106,240)
+-- 🧠 Duplicate v2 — chạy loadstring + hiển thị tiến độ 10s và Success, KHÔNG toast
+local btnClone2=pill(body,"🧠 Duplicate v2"); pillColor(btnClone2,114,106,240)
 btnClone2.MouseButton1Click:Connect(function()
-    btnClone2.Text="Đang nhân bản..."; pillColor(btnClone2,70,200,90)
+    btnClone2.Text="Duplicating..."; pillColor(btnClone2,70,200,90)
+    ShowProgress10s()
     task.defer(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/tunadan212/Kkkk/refs/heads/main/K"))()
     end)
 end)
 
+-- 🎉 Execute Event (Q) — KHÔNG toast
 local btnExec=pill(body,"🎉 Execute Event"); pillColor(btnExec,114,106,240)
 btnExec.MouseButton1Click:Connect(function()
     VIM:SendKeyEvent(true,Enum.KeyCode.Q,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.Q,false,game)
-    toast(frame,"Execute Event","Đã gửi phím Q",2)
 end)
 
+-- 🤤 Spawn Brainrot (R) + textbox — KHÔNG toast
 local btnSpawn=pill(body,"🤤 Spawn Brainrot"); pillColor(btnSpawn,70,180,110)
 local tb=Instance.new("TextBox",body)
 tb.Size=UDim2.new(0.5,-6,0,46)
@@ -195,9 +245,9 @@ Instance.new("UICorner",tb).CornerRadius=UDim.new(0,12)
 local tbs=Instance.new("UIStroke",tb) tbs.Color=Color3.fromRGB(84,130,255) tbs.Thickness=1
 btnSpawn.MouseButton1Click:Connect(function()
     VIM:SendKeyEvent(true,Enum.KeyCode.R,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.R,false,game)
-    toast(frame,"Spawn Brainrot","Đã gửi phím R ("..(tb.Text or "")..")",2)
 end)
 
+-- Panel tròn
 local panel=Instance.new("ImageButton",gui)
 panel.Visible=false
 panel.Size=UDim2.new(0,64,0,64)
@@ -211,75 +261,8 @@ dragify(panel,panel)
 local visible=true
 panel.MouseButton1Click:Connect(function() visible=not visible; frame.Visible=visible end)
 
-task.delay(5,function()
-    if bg then bg:Destroy() end
-    if box then box:Destroy() end
-    frame.Visible=true
-    panel.Visible=true
-end)local body=Instance.new("Frame",frame)
-body.BackgroundTransparency=1
-body.Size=UDim2.new(1,-24,1,-64)
-body.Position=UDim2.new(0,12,0,56)
-local layout=Instance.new("UIGridLayout",body)
-layout.CellPadding=UDim2.new(0,12,0,12)
-layout.CellSize=UDim2.new(0.5,-6,0,46)
-layout.FillDirectionMaxCells=2
-layout.HorizontalAlignment=Enum.HorizontalAlignment.Center
-layout.VerticalAlignment=Enum.VerticalAlignment.Top
-
-local btnClone=pill(body,
-"🧠 Duplicate"); pillColor(btnClone,114,106,240)
-btnClone.MouseButton1Click:Connect(function()
-    VIM:SendKeyEvent(true,Enum.KeyCode.P,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.P,false,game)
-    toast(frame,"Duplicate","Đã gửi phím P",2)
-end)
-
-local btnClone2=pill(body,"🧠 Duplicate v2"); pillColor(btnClone2,114,106,240)
-btnClone2.MouseButton1Click:Connect(function()
-    btnClone2.Text="..."; pillColor(btnClone2,70,200,90)
-    task.defer(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/tunadan212/Kkkk/refs/heads/main/K"))()
-    end)
-end)
-
-local btnExec=pill(body,"🎉 Event"); pillColor(btnExec,114,106,240)
-btnExec.MouseButton1Click:Connect(function()
-    VIM:SendKeyEvent(true,Enum.KeyCode.Q,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.Q,false,game)
-    toast(frame,"Execute Event","Đã gửi phím Q",2)
-end)
-
-local btnSpawn=pill(body,"🤤 Spawn Brainrot"); pillColor(btnSpawn,70,180,110)
-local tb=Instance.new("TextBox",body)
-tb.Size=UDim2.new(0.5,-6,0,46)
-tb.BackgroundColor3=Color3.fromRGB(35,36,40)
-tb.Text="Enter Brainrot"
-tb.TextColor3=Color3.fromRGB(220,220,230)
-tb.Font=Enum.Font.Gotham
-tb.TextSize=16
-tb.ClearTextOnFocus=false
-Instance.new("UICorner",tb).CornerRadius=UDim.new(0,12)
-local tbs=Instance.new("UIStroke",tb) tbs.Color=Color3.fromRGB(84,130,255) tbs.Thickness=1
-btnSpawn.MouseButton1Click:Connect(function()
-    VIM:SendKeyEvent(true,Enum.KeyCode.R,false,game); VIM:SendKeyEvent(false,Enum.KeyCode.R,false,game)
-    toast(frame,"Spawn Brainrot","Đã gửi phím R ("..(tb.Text or "")..")",2)
-end)
-
--- panel tròn kéo thả + ẩn/hiện hub
-local panel=Instance.new("ImageButton",gui)
-panel.Visible=false
-panel.Size=UDim2.new(0,64,0,64)
-panel.AnchorPoint=Vector2.new(1,1)
-panel.Position=UDim2.new(1,-16,1,-16)
-panel.BackgroundColor3=Color3.fromRGB(28,30,36)
-panel.Image="rbxassetid://115555110268657"
-Instance.new("UICorner",panel).CornerRadius=UDim.new(1,0)
-local ps=Instance.new("UIStroke",panel) ps.Color=Color3.fromRGB(84,130,255) ps.Thickness=1.2
-dragify(panel,panel)
-local visible=true
-panel.MouseButton1Click:Connect(function() visible=not visible; frame.Visible=visible end)
-
--- hết 5s: show hub + panel, tắt loading
-task.delay(5,function()
+-- hết 8s -> show hub
+task.delay(8,function()
     if bg then bg:Destroy() end
     if box then box:Destroy() end
     frame.Visible=true
