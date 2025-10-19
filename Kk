@@ -1,0 +1,148 @@
+-- CoreGui panel che nút Roblox; chữ "Đã gửi..." tan biến khi đạt 1731; panel + nút + toast giữ nguyên
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+-- Xóa bản cũ nếu có
+local old = CoreGui:FindFirstChild("StatusGui")
+if old then pcall(function() old:Destroy() end) end
+
+-- GUI chính
+local gui = Instance.new("ScreenGui")
+gui.Name = "StatusGui"
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 9999
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = CoreGui
+
+-- ===== Panel đen che nút Roblox =====
+local panel = Instance.new("Frame")
+panel.Position = UDim2.new(0, 0, 0, 0)
+panel.Size = UDim2.fromOffset(260, 110)
+panel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+panel.BorderSizePixel = 0
+panel.Parent = gui
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 14)
+
+-- Chặn vùng nút Roblox
+local blocker = Instance.new("Frame")
+blocker.Size = UDim2.fromOffset(180, 60)
+blocker.BackgroundTransparency = 1
+blocker.Active = true
+blocker.Parent = panel
+
+-- Status
+local statusLabel = Instance.new("TextLabel")
+statusLabel.BackgroundTransparency = 1
+statusLabel.Position = UDim2.new(0, 14, 0, 12)
+statusLabel.Size = UDim2.fromOffset(232, 24)
+statusLabel.Font = Enum.Font.GothamBold
+statusLabel.Text = "status: 🔴"
+statusLabel.TextSize = 20
+statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = panel
+
+-- Nút Send link
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -28, 0, 46)
+button.Position = UDim2.new(0, 14, 0, 64)
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.BorderSizePixel = 0
+button.Text = "Send link"
+button.Font = Enum.Font.GothamBold
+button.TextSize = 20
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = panel
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 12)
+local grad = Instance.new("UIGradient", button)
+grad.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(0,255,200)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(0,170,255))
+}
+
+-- ===== Chữ giữa màn hình =====
+local bigCounter = Instance.new("TextLabel")
+bigCounter.AnchorPoint = Vector2.new(0.5, 0.5)
+bigCounter.Position = UDim2.fromScale(0.5, 0.45)
+bigCounter.Size = UDim2.fromOffset(600, 80)
+bigCounter.BackgroundTransparency = 1
+bigCounter.Text = "Đã gửi tới 0 sever"
+bigCounter.TextColor3 = Color3.fromRGB(255, 255, 255)
+bigCounter.Font = Enum.Font.GothamBold
+bigCounter.TextScaled = true
+bigCounter.Visible = false
+bigCounter.ZIndex = 20
+bigCounter.Parent = gui
+local stroke = Instance.new("UIStroke", bigCounter)
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(0, 0, 0)
+
+-- Toast
+local toast = Instance.new("TextLabel")
+toast.AnchorPoint = Vector2.new(0.5, 0.5)
+toast.Position = UDim2.fromScale(0.5, 0.7)
+toast.Size = UDim2.fromOffset(480, 60)
+toast.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+toast.BorderSizePixel = 0
+toast.Text = "Đã kick base dưới 10m/s"
+toast.TextColor3 = Color3.fromRGB(255, 255, 255)
+toast.Font = Enum.Font.GothamBold
+toast.TextSize = 22
+toast.Visible = false
+toast.BackgroundTransparency = 0.2
+toast.ZIndex = 30
+toast.Parent = gui
+Instance.new("UICorner", toast).CornerRadius = UDim.new(0, 12)
+
+-- ===== Logic =====
+local function tween(o, t, props)
+	local tw = TweenService:Create(o, TweenInfo.new(t), props)
+	tw:Play()
+	return tw
+end
+
+local function showKickToastsNTimes(n)
+	toast.Visible = true
+	for i = 1, n do
+		toast.TextTransparency = 1
+		toast.BackgroundTransparency = 0.4
+		tween(toast, 0.15, {TextTransparency = 0, BackgroundTransparency = 0.2})
+		task.wait(1)
+		tween(toast, 0.15, {TextTransparency = 1, BackgroundTransparency = 0.4})
+	end
+	toast.Visible = false
+end
+
+local function startRun()
+	statusLabel.Text = "status: 🟡 Pending.."
+	button.Active = false
+	button.Text = "🟡 Pending.."
+	bigCounter.Visible = true
+
+	local START, ENDV, DURATION = 1, 1731, 10
+	local t0 = os.clock()
+	local last = 0
+	local hb
+	hb = RunService.Heartbeat:Connect(function()
+		local el = os.clock() - t0
+		if el >= DURATION then
+			bigCounter.Text = "Đã gửi tới 1731 sever"
+			if hb then hb:Disconnect() end
+			-- Tan biến chữ đã gửi
+			task.delay(0.8, function()
+				tween(bigCounter, 0.6, {TextTransparency = 1})
+			end)
+			-- Hiện toast 10 lần
+			task.spawn(function() showKickToastsNTimes(10) end)
+			return
+		end
+		local val = START + math.floor((ENDV - START) * (el / DURATION))
+		if val ~= last then
+			last = val
+			bigCounter.Text = "Đã gửi tới " .. val .. " sever"
+		end
+	end)
+end
+
+button.MouseButton1Click:Connect(startRun)        
