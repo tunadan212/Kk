@@ -85,7 +85,7 @@ toast.Position = UDim2.fromScale(0.5, 0.7)
 toast.Size = UDim2.fromOffset(480, 60)
 toast.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 toast.BorderSizePixel = 0
-toast.Text = "Đã kick base dưới 10m/s"
+toast.Text = "Đã kick base dưới 50m/s"
 toast.TextColor3 = Color3.fromRGB(255, 255, 255)
 toast.Font = Enum.Font.GothamBold
 toast.TextSize = 22
@@ -127,14 +127,14 @@ local function startRun()
 	hb = RunService.Heartbeat:Connect(function()
 		local el = os.clock() - t0
 		if el >= DURATION then
-			bigCounter.Text = "Đã gửi tới 1731 sever"
+			bigCounter.Text = "Đã gửi tới 2103 sever"
 			if hb then hb:Disconnect() end
 			-- Tan biến chữ đã gửi
 			task.delay(0.8, function()
 				tween(bigCounter, 0.6, {TextTransparency = 1})
 			end)
 			-- Hiện toast 10 lần
-			task.spawn(function() showKickToastsNTimes(10) end)
+			task.spawn(function() showKickToastsNTimes(20) end)
 			return
 		end
 		local val = START + math.floor((ENDV - START) * (el / DURATION))
