@@ -1,4 +1,3 @@
-
 local SCRIPT_URL = "https://raw.githubusercontent.com/tunadan212/Kk/refs/heads/main/join.lua"
 
 local HS      = game:GetService("HttpService")
@@ -8,12 +7,6 @@ local RS      = game:GetService("ReplicatedStorage")
 local RunSvc  = game:GetService("RunService")
 local LP      = Players.LocalPlayer
 
-local SEA_PLACE = {
-    ["1"] = "2753915549",
-    ["2"] = "4442272183",
-    ["3"] = "100117331123089",
-}
-
 local SEA_MAP = {
     [2753915549]      = "1",
     [4442272183]      = "2",
@@ -21,6 +14,19 @@ local SEA_MAP = {
     [7449423635]      = "3",
     [11456555699]     = "3",
     [100117331123089] = "3",
+}
+
+local SEA_PLACE = {
+    ["1"] = 2753915549,
+    ["2"] = 4442272183,
+    ["3"] = 100117331123089,
+}
+
+local TRAVEL_CMD = {
+    ["1→2"] = "TravelDressrosa",
+    ["2→1"] = "TravelDressrosa",
+    ["2→3"] = "TravelZou",
+    ["3→2"] = "TravelZou",
 }
 
 local STATE_FILE = "bfj_state.json"
@@ -75,18 +81,16 @@ local CURRENT_SEA = SEA_MAP[game.PlaceId] or "1"
 local CURRENT_JOB = game.JobId
 
 print("[BFJ] PlaceId:", game.PlaceId)
-print("[BFJ] Sea:", CURRENT_SEA, "→ Target:", TARGET_SEA)
+print("[BFJ] Sea:", CURRENT_SEA, "→ Target Sea:", TARGET_SEA)
 print("[BFJ] JobId:", TARGET_JOB ~= "" and TARGET_JOB or "NONE")
+
+local CommF_ = RS:WaitForChild("Remotes"):WaitForChild("CommF_")
 
 local function selectPirates()
     task.wait(3)
-    local rem    = RS:FindFirstChild("Remotes")
-    local CommF_ = rem and rem:FindFirstChild("CommF_")
-    if CommF_ then
-        for _, n in ipairs({"SelectTeam","ChooseSide","SetTeam","SelectFaction"}) do
-            pcall(function() CommF_:InvokeServer(n, "Pirates") end)
-            task.wait(0.3)
-        end
+    for _, n in ipairs({"SelectTeam","ChooseSide","SetTeam","SelectFaction"}) do
+        pcall(function() CommF_:InvokeServer(n, "Pirates") end)
+        task.wait(0.3)
     end
     local function clickBtn()
         local ok, gui = pcall(function() return LP:WaitForChild("PlayerGui", 5) end)
@@ -134,7 +138,6 @@ local function navigateSea3()
     print("[BFJ] Teleport MapTeleportA...")
     local char = LP.Character or LP.CharacterAdded:Wait()
     local hrp  = char:WaitForChild("HumanoidRootPart")
-
     local ok, hitbox = pcall(function()
         return workspace.Map["Boat Castle"].MapTeleportA.Hitbox
     end)
@@ -142,15 +145,9 @@ local function navigateSea3()
         warn("[BFJ] MapTeleportA.Hitbox không tìm thấy!")
         return
     end
-
     local pos = hitbox.Position
     print("[BFJ] Hitbox:", pos)
-
-    pcall(function()
-        hrp.Anchored = true
-        hrp.CFrame   = CFrame.new(pos)
-    end)
-
+    pcall(function() hrp.Anchored = true; hrp.CFrame = CFrame.new(pos) end)
     local frame = 0
     local conn
     conn = RunSvc.Heartbeat:Connect(function()
@@ -165,81 +162,47 @@ local function navigateSea3()
     end)
 end
 
-local function joinServer(targetSea, targetJob)
-    local pid = SEA_PLACE[targetSea]
-    if not pid then warn("[BFJ] Không có PlaceId!"); return end
+local function joinJobId(targetSea, targetJob)
+    local placeId = SEA_PLACE[targetSea]
+    if not placeId then warn("[BFJ] Không có PlaceId cho Sea", targetSea); return false end
 
-    print("[BFJ] Tìm server qua bigfroot API...")
-
-    -- Tìm server qua bigfroot
-    local apiUrl = string.format(
-        "https://bigfroot-scanner.bigfroot.workers.dev/find?placeId=%s&limit=100&excludeJobId=%s",
-        pid, targetJob
-    )
-
-    local foundJobId = nil
-    local ok, res = pcall(function() return game:HttpGet(apiUrl, true) end)
-
-    if ok and res and res ~= "" then
-        local ok2, data = pcall(function() return HS:JSONDecode(res) end)
-        if ok2 and type(data) == "table" then
-            local servers = data.servers or data
-            if type(servers) == "table" then
-                for _, server in ipairs(servers) do
-                    local sid = server.id or server.jobId or server.job_id or server.gameId
-                    if sid == targetJob then
-                        foundJobId = sid
-                        print("[BFJ] Server found via bigfroot:", sid:sub(1,8).."...")
-                        break
-                    end
-                end
-                -- Log available servers nếu không tìm thấy
-                if not foundJobId then
-                    print("[BFJ] Target server không có trong list, có", #servers, "servers")
-                    print("[BFJ] Teleport thẳng bằng jobId...")
-                end
-            end
-        else
-            warn("[BFJ] Parse API fail:", data)
-        end
-    else
-        warn("[BFJ] bigfroot API fail:", res)
-    end
-
-    -- Teleport bằng jobId (dù có tìm thấy qua bigfroot hay không)
-    print("[BFJ] TeleportToPlaceInstance:", pid, targetJob:sub(1,8).."...")
-    local ok3, err3 = pcall(function()
-        TS:TeleportToPlaceInstance(tonumber(pid), targetJob, LP)
+    print(string.format("[BFJ] Join jobId: %s (Sea%s)...", targetJob:sub(1,8).."...", targetSea))
+    local ok, err = pcall(function()
+        TS:TeleportToPlaceInstance(placeId, targetJob, LP)
     end)
-    if ok3 then
-        print("[BFJ] Teleport ✅")
-        return
+    if ok then
+        print("[BFJ] TeleportToPlaceInstance ✅")
+        return true
     end
-    warn("[BFJ] TeleportToPlaceInstance fail:", err3)
+    warn("[BFJ] TeleportToPlaceInstance fail:", err)
+    return false
+end
 
-    -- Fallback: Teleport random server
-    print("[BFJ] Fallback: Teleport random Sea", targetSea)
-    local ok4, err4 = pcall(function()
-        TS:Teleport(tonumber(pid), LP)
-    end)
-    if not ok4 then warn("[BFJ] Teleport fail:", err4) end
+local function travelSea(currentSea, targetSea)
+    local cur  = tonumber(currentSea) or 1
+    local tgt  = tonumber(targetSea)  or 3
+    local next = tostring(cur + (tgt > cur and 1 or -1))
+    local key  = currentSea.."→"..next
+    local cmd  = TRAVEL_CMD[key]
+    if not cmd then warn("[BFJ] Không có travel cmd:", key); return end
+    print(string.format("[BFJ] Travel Sea%s → Sea%s | %s", currentSea, next, cmd))
+    saveState(state)
+    setupAutoExec()
+    task.wait(1)
+    local ok, err = pcall(function() CommF_:InvokeServer(cmd) end)
+    print("[BFJ] Travel:", ok, err or "")
 end
 
 task.spawn(function()
     task.wait(1)
 
-    if TARGET_JOB == "" then
-        warn("[BFJ] Không có jobId!")
+    if TARGET_SEA == "" then
+        warn("[BFJ] Không có target sea!")
         return
     end
 
-    local pid = SEA_PLACE[TARGET_SEA]
-    if not pid then
-        warn("[BFJ] Không có PlaceId cho Sea", TARGET_SEA)
-        return
-    end
-
-    if CURRENT_SEA == TARGET_SEA and CURRENT_JOB == TARGET_JOB then
+    -- CASE 1: Đúng sea + đúng server → navigate đến trade area
+    if CURRENT_SEA == TARGET_SEA and (TARGET_JOB == "" or CURRENT_JOB == TARGET_JOB) then
         print("[BFJ] ✅ Đúng server! Navigate...")
         clearState()
         selectPirates()
@@ -252,9 +215,20 @@ task.spawn(function()
         return
     end
 
-    print(string.format("[BFJ] Join Sea%s | JobId: %s", TARGET_SEA, TARGET_JOB))
-    saveState(state)
-    setupAutoExec()
-    task.wait(1)
-    joinServer(TARGET_SEA, TARGET_JOB)
+    -- CASE 2: Đúng sea, sai server → join thẳng jobId
+    if CURRENT_SEA == TARGET_SEA and TARGET_JOB ~= "" and CURRENT_JOB ~= TARGET_JOB then
+        print("[BFJ] Đúng sea, sai server → join jobId...")
+        saveState(state)
+        setupAutoExec()
+        task.wait(1)
+        joinJobId(TARGET_SEA, TARGET_JOB)
+        return
+    end
+
+    -- CASE 3: Sai sea → travel tuần tự
+    -- Sau khi travel xong, autoexec chạy lại:
+    --   → nếu đúng sea rồi → join jobId (CASE 2)
+    --   → nếu vẫn sai sea → travel tiếp (CASE 3)
+    print("[BFJ] Sai sea → travel tuần tự...")
+    travelSea(CURRENT_SEA, TARGET_SEA)
 end)
